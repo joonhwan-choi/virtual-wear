@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>멀티미디어학회</title>
+</head>
+
+<body>
+<p id="dynamic" class="lg-text"></p><p >이미지 가상 착용 기술을 활용한 체형의 피팅 시뮬레이션 연구</p>
+<p id="dynamic1" class="lg-text"></p><p >호남대학교 컴퓨터공학과 3학년 최준환</p>
+
+
+
+<p>성별</p>
+<label><input type="radio" name="fruit" value="남자" checked> 남자</label>
+<label><input type="radio" name="fruit" value="여자"> 여자</label>
+
+<p id="a1"></p><p >체중</p>
+<input type="text" id="aa1"oninput="homzzang()" >
+
+<p id="a2"></p><p >키</p>
+<input type="text" id="aa2" >
+
+<p id="a3"></p><p >기초대사량</p>
+<input id="aa3">
+
+
+<p id="a4" class="lg-text"></p><p >하루 섭취칼로리</p>
+<input id="aa4">
+<p id="a5" class="lg-text"></p><p >하루 소비칼로리</p>
+<input id="aa5">
+<p id="a6" class="lg-text"></p><p >다이어트 기간</p>
+<input id="aa6">
+
+
+
+
+
+
+
+
+
+<script>
+function ho() {
+    document.getElementById("measurement_value_weight_cube_root").value = "sdf";
+
+}
+function homzzang() {
+  var w = document.getElementById("aa1").value;
+  var h = document.getElementById("aa2").value;
+  var obj = document.getElementsByName('fruit');
+  if(obj[0].checked){
+    document.getElementById("aa3").value= w*1*24;
+  }else{
+    document.getElementById("aa3").value= Math.ceil(w*0.9*24);
+  }
+}
+
+function inp() {
+  var w = document.getElementById("aa1").value;
+  var h = document.getElementById("aa2").value;
+  var d = document.getElementById("aa3").value;
+  var ik= document.getElementById("aa4").value;
+  var ok= document.getElementById("aa5").value;
+  var c = document.getElementById("aa6").value;
+
+  var sh="";
+  var hdd="";
+  var hddd="";
+  var obj1 = document.getElementsByName('hd');
+  var obj = document.getElementsByName('fruit');
+  var dk="";
+  var mk="";
+  if(obj1[0].checked){
+    hdd="비활동적"
+    hddd=d*0.2;
+
+  }else if(obj1[1].checked){
+    hdd="저활동적"
+    hddd=d*0.5;
+
+  }else if(obj1[2].checked){
+    hdd="활동적"
+    hddd=d*0.7;
+  }else if(obj1[3].checked){
+    hdd="매우 활동적"
+    hddd=d*0.8;
+  }
+    sh=(parseInt(d)+parseInt(hddd))/0.9*0.1;
+
+    dk=(parseInt(ik)-parseInt(ok))/7700
+    mk=parseFloat(dk)*parseInt(c)
+
+   alert('체중 : ' + w +'\n'+ '키 : ' + h +'\n'+ '기초대사량 : ' + d +'\n'+ '하루 섭취 칼로리 ' + ik +'\n'+ '하루 소비 칼로리' + ok +'\n'+ '다이어트기간 : ' + c + '\n' + '활동대사량 : ' + hdd + '('  + hddd + ')' + '\n'+ '소화칼로리 : ' + sh.toFixed(2) +'\n'+ '하루 체중증감예상 : ' + dk.toFixed(2) + 'kg' +  '\n' + '다이어트기간 체중증감예상 : ' + mk.toFixed(2) + 'kg' +  '\n' +' 저장완료');
+   document.getElementById("measurement_value_weight_cube_root").value = "sdf";
+}
+</script>
+
+</body>
+<div>
+    <p1>활동대사량</p1>
+    <label><input type="radio" name="hd" value="비활동적" checked> 비활동적</label>
+    <label><input type="radio" name="hd" value="저활동적"> 저활동적</label>
+    <label><input type="radio" name="hd" value="활동적"> 활동적</label>
+    <label><input type="radio" name="hd" value="매우 활동적"> 매우 활동적</label>
+</div>
+
+<div>
+    <input type="button"  value='입력완료' onclick="inp()";/>
+    <input type="button"  value='실행' onClick="location.href='index.html'" oninput="ho()">
+</div>
+</html>

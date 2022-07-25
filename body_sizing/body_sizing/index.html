@@ -1,0 +1,244 @@
+<html>
+<head>
+	<title>Body Visualizer Sizing Demo</title>
+	<script type="text/javascript" src="js/jquery/jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="js/jquery/jquery-ui-1.8.18.custom.min.js"></script>
+	<script type="text/javascript" src="js/jquery/jquery-timers.js"></script>
+	<script>var $J = jQuery.noConflict();</script>
+
+	<script src="js/helpers.js"></script>
+	<script src="js/body.js"></script>
+	<script src="js/body_viewer.js"></script>
+	<script src="js/body_ui.js"></script>
+	<script src="js/measurements.js"></script>
+
+	<script src="js/webgl/webgl-debug.js"></script>
+	<script type="text/javascript" src="js/webgl/prototype.js"></script>
+	<script type="text/javascript" src="js/webgl/moz_matrix4x4.js"></script>
+	<script type="text/javascript" src="js/webgl/cameracontroller.js"></script>
+	<script type="text/javascript" src="js/webgl/model_viewer.js"></script>
+	<script type="text/javascript" src="js/webgl/mesh_loader.js"></script>
+
+
+	<script type="text/javascript" src="js/math/sylvester.js"></script>
+	<script type="text/javascript" src="js/math/conditional_gaussian.js"></script>
+
+	<script src="js/data/measurement_data.js"></script>
+	<!-- script src="js/data/measurement_info.js"></script -->
+	<!-- script src="js/data/measurement_info_without_fitness.js"></script -->
+	<!-- script src="js/data/peng_measurement_info.js"></script -->
+
+	<script src="js/size_viewer.js"></script>
+	<script src="js/data/brand_info.js"></script>
+	<script src="js/data/sizechart_info.js"></script>
+
+	<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+	<link type="text/css" href="css/style.css" rel="stylesheet" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+</head>
+<body>
+	<div id="overlay">
+		<h1 id="overlay_heading">Loading body data...</h1>
+		<div id="overlay_content">
+			<h3>This site requires a <a href='http://www.doesmybrowsersupportwebgl.com/'>WebGL-enabled browser</a>
+				such as the latest version of <a href='https://www.google.com/intl/en/chrome/browser/'>Google Chrome</a>.</h3>
+			<p>
+				<h3>This website has been created for demonstration purposes only. Please confirm that:</h3>
+				<ul>
+					<li>You will not use or record any information displayed on this website for commercial purposes.</li>
+					<li>You will not extract statistical data or 3D meshes from any of the files loaded by this website.</li>
+					<li>You will not attempt to reverse engineer the deformable 3D models that power this website.</li>
+				</ul>
+			</p>
+			<form style="text-align: right">
+				<input type="checkbox" id="license_confirmed" name="license_confirmed" value="" /> I agree to all of the above
+			</form>
+			<script>
+				$J('#license_confirmed').click(hide_loading_overlay);
+				$J('#overlay').hide();
+			</script>
+		</div>
+	</div>
+	<div id="popup" style="display: none;">
+		<div id="popup_header"><a href="#" onClick="$J('#popup').hide(); return false;">CLOSE X</a></div>
+		<div id="popup_content"></div>
+	</div>
+
+	<div id='container'>
+		<div id='header'>
+		</div>
+		<div id="left_column">
+			<div id="left_column_header"><h1>몸매보정&가상착용</h1></div>
+			<div id="measurements_column">
+				<div id="gender_div" style="display: none">
+					<h3><span id="gender">Female Measurements</span></h3>
+					<a href="?gender=male" onClick="return true; switch_gender(); return false;" id="switch_gender">switch to male</a>
+				</div>
+				<div id="measurements">
+					<script>
+						function set_gender(gender) {
+							var formatted_gender = (gender == 'female') ? 'Female' : 'Male';
+							$J('#switch_gender').text('switch to ' + ((gender == 'female') ? 'male' : 'female'));
+							$J('#switch_gender').attr('href', '?gender=' + ((gender == 'female') ? 'male' : 'female'));
+							$J('#gender').text(formatted_gender + ' Measurements');
+
+							if (typeof body_viewer === "object") { body_viewer.set_current_gender(gender); }
+							if ((typeof sizecharts === "object") && (typeof brand_info === "object")) { reset_size_viewer(this.current_gender); }
+						}
+						function switch_gender() {
+							set_gender((this.current_gender == 'female') ? 'male' : 'female');
+						}
+
+						var get_arguments = getArgumentsFromUrl();
+						var current_gender = get_arguments.gender ? get_arguments.gender : 'female';
+						set_gender(current_gender);
+					</script>
+					<div id="slider_rows" class="slider_stuff"></div>
+					<div id="slider_row_template" style="display:none;">
+						<div class="slider_row" id="##string1##_slider_row">
+							<span class="value_box">
+								<h3>##string2##: </h3>
+								<input id="measurement_value_##string1##" class="measurement_value"></input><!--숫자 입력칸    measurement_value<입력값   -->
+
+								<script type="text/javascript">
+									function change() {
+										document.getElementById("measurement_value_weight_cube_root").value = 60.0;
+										console.log('가져온 텍스트:', gett);
+									}
+								</script>
+								<button type="button" onclick="change()";>
+								</button>
+								<span id="measurement_units_##string1##" class="measurement_units"></span><!--단위-->
+							</span>
+							<span class="set_box"><input type="checkbox" id="measurement_set_##string1##" class="body_set"></input> Sex</span>
+							<div id="measurement_slider_##string1##" class="measurement_slider"></div>
+						</div>
+					</div>
+					<div id="checkbox_rows" class="checkbox_stuff" style="display:none;"></div>
+					<div id="checkbox_row_template" style="display:none;">
+						<div class="checkbox_row" id="checkbox_row_##string1##">
+							<input type="checkbox" id="measurement_visible_##string1##" name="measurements_to_use" value="" /> ##string2##
+						</div>
+					</div>
+				</div>
+				<div id="measurements_column_footer">
+					<span id="measurement_commands" class="slider_stuff"><a href="#" id="reset_all_measurements">reset all</a></span>
+					<span id="checkbox_commands" class="checkbox_stuff" style="display:none;"><a href="#" id="show_sliders">show sliders</a></span>
+					<span id="hand_measurements_commands" class="hand_measurements_stuff" style="display:none;"><a href="#" id="show_sliders1"> | show hand measurements</a></span>script
+					<script>
+						$J('#reset_all_measurements').click(function(){ body_viewer.reset_all_measurement_sliders(); return false; })
+						$J('#show_sliders').click(function(){ $J('.slider_stuff').show(); $J('.checkbox_stuff').hide(); return false; })
+					</script>
+				</div>
+			</div>
+			<div id="body_viewer">
+				<canvas id='viewer_canvas' height=600 width=445></canvas>
+			</div>
+
+		</div>
+		<div id="right_column">
+			<div id="right_column_header"><h1>Predicted Sizes</h1></div>
+			<div id="sizes">
+				<div id="brand_rows"></div>
+				<div id="brand_row_template" style="display:none;">
+					<div class="brand_row ##string3##" id="##string1##_row">
+						<h3 class="brand_name">##string2##: <span class="size"></span></h3>
+					</div>
+				</div>
+			</div>
+			<div id="right_column_footer"><p style="display: none">size info for <select id='clothing_categories'></select></p></div>
+		</div>
+	</div>
+	<script>
+
+	var body;
+	var body_viewer;
+
+	var current_category;
+	$J(function() {
+		init_measurements(current_gender);
+		body = new Body(current_gender);
+		body_viewer = new BodyViewer(body, $J('#body_viewer')[0], $J('#viewer_canvas')[0]);
+//		body_viewer = new BodyViewer(body, $J('#body_viewer')[0], $J('#viewer_canvas')[0], {texture_url:'js/webgl/textures/female_texture.jpg'});
+
+		if (typeof(setup_clothing_callbacks) === "function") { setup_clothing_callbacks(); }
+
+		if ((typeof sizecharts === "object") && (typeof brand_info === "object")) {
+			setup_brand_rows(current_gender, current_category);
+			body.addCallback(update_sizes)
+		} else {
+			$J('#right_column').remove();
+		}
+		if (mdata['hand_measurements'] != undefined) {
+			$J('#hand_measurements_commands').show()
+			$J('#hand_measurements_commands').click(function() { $J('#popup').show(); return false; })
+			measurement_table = '<h1 style="font-weight: bold; text-align: center">hand measurements</h3>\n<table style = "background: #ccc; width: 100%; border: solid 3px #999">';
+			measurement_table += '<thead><tr style="font-weight: bold;"><th>measurement</th><th>predicted</th><th>hand</th><th>error</th></tr></thead><tbody>'
+			for (var ind = 0; ind < mdata['hand_measurements'].length; ind++) {
+				if (ind % 2 == 0) {
+					measurement_table += '<tr style="background: #eee;"><td style="font-weight: bold;">';
+				} else {
+					measurement_table += '<tr><td style="font-weight: bold">';
+				}
+				measurement_table += mdata['hand_measurement_names'][ind] + '</td><td>'
+				measurement_table += mdata['hand_measurement_predicted_values'][ind] + '</td><td>'
+				measurement_table += mdata['hand_measurement_true_values'][ind] + '</td><td>\n';
+				measurement_table += mdata['hand_measurement_error_values'][ind] + ' (' + mdata['hand_measurement_percent_error_values'][ind] + '%)' + '</td></tr>\n';
+			}
+			measurement_table += '</tbody></table>'
+			$J('#popup_content').html(measurement_table);
+		}
+	});
+
+	/*
+	var clothing_data_directory = 'js/data/clothing_meshes/';
+	var clothed_mesh_url = "shirt.js";
+	clothed_mesh_url = "test_mesh_3.js";
+	var current_clothed_mesh_model = undefined;
+	var clothing_loader = undefined;
+	var clothing_request_counter = 0;
+	var show_clothing = {};
+
+	setup_clothing_callbacks = function () {
+		show_clothing_function = function() {
+			clothing_request_counter = clothing_request_counter + 1;
+			console.log('initiating clothing request: ' + clothing_request_counter);
+			show_clothing[clothing_request_counter] = true;
+			show_clothing_callback = function(i) {
+				return function(clothed_model) {
+					if (current_clothed_mesh_model) { body_viewer.remove_model(current_clothed_mesh_model); }
+					current_clothed_mesh_model = clothed_model;
+					clothing_color = [0.6, 0.3, 0.3, 1];
+					if (show_clothing[i]) { body_viewer.add_model(current_clothed_mesh_model, clothing_color); body_viewer.remove_body(); }
+				}
+			}(clothing_request_counter);
+			clothing_loader = new ClothingLoader(clothing_data_directory, [clothed_mesh_url], show_clothing_callback);
+		};
+		body.addOnStopCallback( show_clothing_function );
+
+		hide_clothing_function = function() {
+			if (show_clothing[clothing_request_counter]) {
+				console.log('hiding clothing request: ' + clothing_request_counter);
+				show_clothing[clothing_request_counter] = false;
+				if (current_clothed_mesh_model) { body_viewer.remove_model(current_clothed_mesh_model); body_viewer.add_body(); }
+			}
+		};
+		body.addCallback( hide_clothing_function );
+	}
+	*/
+
+	</script>
+	<script type="text/javascript">
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-4719595-3']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+	</script>
+</body>
+</html>
